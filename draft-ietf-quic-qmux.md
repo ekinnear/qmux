@@ -435,11 +435,11 @@ frame, or by observing a reset of the underlying transport.
 As in QUIC version 1, endpoints negotiate an idle timeout using the
 max_idle_timeout transport parameter.
 
-Endpoints reset the idle timer when sending or receiving a QMux record. Activity
-on the underlying transport, such as TCP keepalives, does not reset the idle
-timer. Unlike QUIC version 1, idle timeout handling does not rely on
-acknowledgments; QMux endpoints do not increase their idle timeouts relative to
-the current Probe Timeout (PTO).
+Endpoints reset the idle timer each time a QMux record is either completely sent
+or completely received. Activity on the underlying transport, such as TCP
+keepalives, does not reset the idle timer. Unlike QUIC version 1, idle timeout
+handling does not rely on acknowledgments; QMux endpoints do not increase their
+idle timeouts relative to the current Probe Timeout (PTO).
 
 When idle, a QMux connection may also be torn down by the underlying transport
 stack or by intermediaries (e.g., Network Address Translation {{?RFC7857}}),
