@@ -653,7 +653,7 @@ type PROTOCOL_VIOLATION.
 
 Unlike QUIC, where each packet is a self-contained unit, QMux records can arrive
 incrementally over the underlying byte stream. Implementations need to consider
-resources held for partially received records.
+resources they might use to hold partially received records.
 
 
 # IANA Considerations
