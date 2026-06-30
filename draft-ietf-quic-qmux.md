@@ -471,7 +471,8 @@ discarding packets received during the draining period
 
 When receiving a CONNECTION_CLOSE frame or observing the peer shut down the
 peer's sending side, the receiving endpoint SHOULD gracefully shut down its
-sending side, without sending any frames.
+sending side without sending any frames, or after sending a single
+CONNECTION_CLOSE frame.
 
 
 ## Handling Resets
