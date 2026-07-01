@@ -454,10 +454,10 @@ When the idle timeout expires, an endpoint gracefully shuts down its sending
 side of the underlying transport, without sending any frames.
 
 Separately, as in QUIC version 1, an endpoint can initiate closing of a QMux
-connection by sending a CONNECTION_CLOSE frame and then gracefully shuts down
+connection by sending a CONNECTION_CLOSE frame and then gracefully shutting down
 its sending side of the underlying transport.
 
-In either case, once shutting down the sending side, the endpoint SHOULD wait
+In either case, after shutting down the sending side, the endpoint SHOULD wait
 for the peer to gracefully shut down the peer's sending side. The use of
 graceful shutdown mitigates the risk of undelivered records and frames
 becoming lost due to abrupt termination of the underlying transport. While
@@ -471,7 +471,7 @@ discarding packets received during the draining period
 
 When receiving a CONNECTION_CLOSE frame or observing the peer shut down the
 peer's sending side, the receiving endpoint SHOULD gracefully shut down its
-sending side without sending any frames, or after sending a single
+sending side, either without sending any frames or after sending a single
 CONNECTION_CLOSE frame.
 
 
