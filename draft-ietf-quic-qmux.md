@@ -432,20 +432,35 @@ frame, or by observing a reset of the underlying transport.
 
 ## Idle Timeout
 
-As in QUIC version 1, endpoints negotiate an idle timeout using the
-max_idle_timeout transport parameter.
+In QUIC version 1, the idle timer is reset whenever a packet is received and
+processed successfully, including acknowledgment-only packets. It also raises
+the idle timeout using PTO, a value derived from when acknowledgments are
+received. QMux cannot adopt this approach as-is since acknowledgments are not
+processed by QMux stacks; they are processed by the underlying transport
+instead.
 
-Endpoints reset the idle timer each time a QMux record is either completely sent
-or completely received. Activity on the underlying transport, such as TCP
-keepalives, does not reset the idle timer. QMux endpoints do not increase their
-idle timeouts relative to the current Probe Timeout (PTO).
+As a consequence, the idle timeout of QMux is defined as follows:
+
+* As in QUIC version 1, endpoints negotiate an idle timeout using the
+  max_idle_timeout transport parameter.
+* As in QUIC version 1, endpoints reset the idle timer each time a QMux record
+  is completely received.
+* Endpoints also reset the idle timer each time a QMux record is completely
+  sent. This is analogous to QUIC version 1 endpoints resetting the idle timer
+  when an acknowledgment-only packet is received. Since acknowledgments are not
+  directly visible to QMux endpoints, QMux endpoints observe the side effect of
+  acknowledgments: bytes drained from the send buffer, opening up space to send
+  more.
+* Activity on the underlying transport, such as TCP keepalives, does not reset
+  the idle timer.
+* QMux endpoints do not increase their idle timeouts relative to the current
+  Probe Timeout (PTO).
 
 When idle, a QMux connection may also be torn down by the underlying transport
 stack or by intermediaries (e.g., Network Address Translation {{?RFC7857}}),
-independent of the negotiated timeout.
-
-QX_PING frames can be used to elicit a peer response and keep both the QMux
-connection and the underlying transport active.
+independent of the negotiated timeout. QX_PING frames can be used to elicit a
+peer response and keep both the QMux connection and the underlying transport
+active.
 
 
 ## Initiating a Connection Close
