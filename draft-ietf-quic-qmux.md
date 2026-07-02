@@ -448,10 +448,11 @@ As a consequence, the idle timeout of QMux is defined as follows:
 * Endpoints also reset the idle timer each time a QMux record is completely
   sent. This is analogous to QUIC version 1 endpoints resetting the idle timer
   when an acknowledgment-only packet is received. Since acknowledgments are not
-  directly visible to QMux endpoints, QMux endpoints observe the side effect of
+  directly visible to QMux endpoints, QMux does not reset the idle time on acknowledgements.
+  Instead, endpoints only observe the side effect of
   acknowledgments: bytes drained from the send buffer, opening up space to send
   more.
-* Activity on the underlying transport, such as TCP keepalives, does not reset
+* Activity on the underlying transport - such as acknowledgments, TCP keepalives, or TLS key updates - does not reset
   the idle timer.
 * QMux endpoints do not increase their idle timeouts relative to the current
   Probe Timeout (PTO).
@@ -466,7 +467,8 @@ active.
 ## Initiating a Connection Close
 
 When the idle timeout expires, an endpoint gracefully shuts down its sending
-side of the underlying transport, without sending any frames.
+side of the underlying transport. The endpoint does not send any QMux frames, though
+it might send messages at lower layers, such as a TLS `close_notify` alert.
 
 Separately, as in QUIC version 1, an endpoint can initiate closing of a QMux
 connection by sending a CONNECTION_CLOSE frame and then gracefully shutting down
@@ -663,8 +665,7 @@ connection alive, to consume processing resources disproportionate to useful
 progress, or to force an endpoint to generate responses. For example, sending
 large numbers of small records, PADDING frames, tiny flow control increments, or
 QX_PING frames can be used for such purposes. Implementations SHOULD monitor for
-such traffic patterns and MAY treat suspicious activity as a connection error of
-type PROTOCOL_VIOLATION.
+such traffic patterns and MAY treat suspicious activity as a connection error.
 
 Unlike QUIC, where each packet is a self-contained unit, QMux records can arrive
 incrementally over the underlying byte stream. Implementations need to consider
