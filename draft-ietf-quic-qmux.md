@@ -446,12 +446,10 @@ As a consequence, the idle timeout of QMux is defined as follows:
 * As in QUIC version 1, endpoints reset the idle timer each time a QMux record
   is completely received.
 * Endpoints also reset the idle timer each time a QMux record is completely
-  sent. This is analogous to QUIC version 1 endpoints resetting the idle timer
-  when an acknowledgment-only packet is received. Since acknowledgments are not
-  directly visible to QMux endpoints, QMux does not reset the idle time on acknowledgements.
-  Instead, endpoints only observe the side effect of
-  acknowledgments: bytes drained from the send buffer, opening up space to send
-  more.
+  sent. Since acknowledgments are not directly visible to QMux endpoints, QMux
+  does not reset the idle timer on acknowledgements. Instead, endpoints observe
+  the side effect of acknowledgments: bytes drained from the send buffer,
+  opening up space to send more.
 * Activity on the underlying transport - such as acknowledgments, TCP keepalives, or TLS key updates - does not reset
   the idle timer.
 * QMux endpoints do not increase their idle timeouts relative to the current
