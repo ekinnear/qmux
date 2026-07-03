@@ -79,6 +79,44 @@ The specified polyfill provides a compatibility layer for the set of operations
 QUIC}}.
 
 
+## Downsides Compared to QUIC Version 1 {#downsides}
+
+By running QUIC's stream and datagram operations over a single ordered byte
+stream, QMux gives up several properties that QUIC version 1 provides.
+Applications choosing between QMux and QUIC should weigh the following
+trade-offs.
+
+Head-of-line blocking:
+
+: QMux carries all streams and datagrams over one ordered, reliable byte
+  stream. The loss of a single segment on that transport delays every byte
+  behind it, stalling all QMux streams, datagrams, and control messages
+  until the loss is repaired. While QUIC avoids this by delivering each
+  stream independently ({{Section 2 of QUIC}}), QMux cannot, because the
+  underlying transport exposes a single ordered sequence of bytes.
+
+No connection migration or multipath:
+
+: A QMux connection is tied to the connection of the underlying transport,
+  such as a TCP four-tuple. Unlike QUIC, it cannot migrate to a new path or
+  survive a change in the client's address ({{Section 9 of QUIC}}).
+
+Connection establishment latency:
+
+: QMux uses the underlying transport for connection establishment rather
+  than QUIC's combined transport and cryptographic handshake. Establishment
+  latency is therefore bounded by that of the underlying transport; e.g., a
+  TCP handshake followed by a TLS handshake. Early data on resumption is
+  limited to what the underlying transport offers, such as TLS 1.3 0-RTT.
+
+Dependence on the underlying transport:
+
+: QMux provides no confidentiality, integrity, or peer authentication of
+  its own, and relies on the underlying transport for these properties and
+  for application protocol negotiation (see {{transport-properties}} and
+  {{negotiation}}).
+
+
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
