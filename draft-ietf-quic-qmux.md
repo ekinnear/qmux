@@ -375,8 +375,8 @@ following transport parameters is allowed:
 
 The definitions of these transport parameters are unchanged.
 
-Use of all other transport parameters defined in {{Section 18.2 of QUIC}},
-namely the following, is prohibited:
+Use of all other transport parameters defined in {{Section 18.2 of QUIC}} 
+is prohibited, namely the following:
 
 * original_destination_connection_id
 * stateless_reset_token
