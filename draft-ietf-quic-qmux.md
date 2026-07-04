@@ -254,7 +254,7 @@ due to the underlying transport's guarantee of in-order delivery.
 
 When receiving a STREAM frame that carries a payload not immediately following
 the payload of the previous STREAM frame for the same Stream ID, receivers MUST
-close the connection with an error of type PROTOCOL_VIOLATION_ERROR.
+close the connection with an error of type PROTOCOL_VIOLATION.
 
 These changes do not impact the senders' capability to interleave STREAM frames
 from multiple streams.
