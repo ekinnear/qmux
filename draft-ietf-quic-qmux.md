@@ -462,20 +462,76 @@ amount of stream data a peer can send is limited by flow control
 datagrams when they cannot be promptly delivered to the application.
 
 
-# Closing the Connection
+# Connection Termination
 
-As is with QUIC version 1, a connection can be closed either by a
-CONNECTION_CLOSE frame or by an idle timeout.
+A QMux connection can be terminated by an idle timeout, by a CONNECTION_CLOSE
+frame, or by observing a closure of the underlying transport.
 
-Unlike QUIC version 1, idle timeout handling does not rely on ACK frames.
-Endpoints reset the idle timer when sending or receiving QMux frames. When no
-other traffic is available, QX_PING frames can be used to elicit a peer
-response and keep the connection active.
 
-Unlike QUIC version 1, there is no draining period; once an endpoint sends or
-receives the CONNECTION_CLOSE frame or reaches the idle timeout, all the
-resources allocated for the Service are freed and the underlying transport is
-closed immediately.
+## Idle Timeout
+
+In QUIC version 1, the idle timer is reset whenever a packet is received and
+processed successfully, including acknowledgment-only packets. It also raises
+the idle timeout using PTO, a value derived from when acknowledgments are
+received. QMux cannot adopt this approach as-is since acknowledgments are not
+processed by QMux stacks; they are processed by the underlying transport
+instead.
+
+As a consequence, the idle timeout of QMux is defined as follows:
+
+* As in QUIC version 1, endpoints negotiate an idle timeout using the
+  max_idle_timeout transport parameter.
+* As in QUIC version 1, endpoints reset the idle timer each time a QMux record
+  is completely received.
+* Endpoints also reset the idle timer each time a QMux record is completely
+  sent. Since acknowledgments are not directly visible to QMux endpoints, QMux
+  does not reset the idle timer on acknowledgements. Instead, endpoints observe
+  the side effect of acknowledgments: bytes drained from the send buffer,
+  opening up space to send more.
+* Activity on the underlying transport - such as acknowledgments, TCP keepalives, or TLS key updates - does not reset
+  the idle timer.
+* QMux endpoints do not increase their idle timeouts relative to the current
+  Probe Timeout (PTO).
+
+While idle, a QMux connection may also be disrupted by inactivity timers outside
+of QMux; e.g., a  Network Address Translator {{?RFC7857}} that discards its
+mapping. QX_PING frames can be used to elicit a peer response, which could keep
+inactivity timers at lower transport layers and intermediaries from causing
+premature connection termination.
+
+
+## Initiating a Connection Close
+
+When the idle timeout expires, an endpoint gracefully shuts down its sending
+side of the underlying transport. The endpoint does not send any QMux frames, though
+it might send messages at lower layers, such as a TLS `close_notify` alert.
+
+Separately, as in QUIC version 1, an endpoint can initiate closing of a QMux
+connection by sending a CONNECTION_CLOSE frame and then gracefully shutting down
+its sending side of the underlying transport.
+
+In either case, after shutting down the sending side, the endpoint SHOULD wait
+for the peer to gracefully shut down the peer's sending side. The use of
+graceful shutdown mitigates the risk of undelivered records and frames
+becoming lost due to abrupt termination of the underlying transport. While
+waiting for the peer to gracefully shut down, QMux endpoints SHOULD discard any
+data they receive without processing it, similarly to QUIC version 1 endpoints
+discarding packets received during the draining period
+({{Section 10.2.2 of QUIC}}).
+
+
+## Responding to a Connection Close
+
+When receiving a CONNECTION_CLOSE frame or observing the peer shut down the
+peer's sending side, the receiving endpoint SHOULD gracefully shut down its
+sending side, either without sending any frames or after sending a single
+CONNECTION_CLOSE frame.
+
+
+## Handling Resets {#handling-resets}
+
+When the underlying transport becomes unavailable (e.g., due to a TCP reset or a
+TLS fatal alert), the QMux connection is terminated immediately.
 
 
 # Using TLS
@@ -640,9 +696,34 @@ throughput.
 
 # Security Considerations
 
+QMux inherits many of the security properties and considerations laid out in
+{{Section 21 of QUIC}}. This section describes considerations specific to QMux.
+
+
+## Forward Progress
+
 Failure to follow the forward-progress requirements in
 {{forward-progress-flow-control}} can lead to deadlock and can be exploited for
 resource-exhaustion attacks.
+
+
+## Denial of Service
+
+As in QUIC ({{Section 21.9 of QUIC}}), valid QMux frames can be used to keep a
+connection alive, to consume processing resources disproportionate to useful
+progress, or to force an endpoint to generate responses. For example, sending
+large numbers of small records, PADDING frames, tiny flow control increments, or
+QX_PING frames can be used for such purposes. Implementations SHOULD monitor for
+such traffic patterns and MAY treat suspicious activity as a connection error.
+
+Unlike QUIC, where each packet is a self-contained unit, QMux records can arrive
+incrementally over the underlying byte stream. Implementations need to consider
+resources they might use to hold partially received records.
+
+Unlike QUIC, QMux does not provide protection against premature connection
+termination by unauthenticated on-path entities. An intermediary that can
+disrupt the underlying transport will be able to successfully terminate
+connections; see {{handling-resets}}.
 
 
 # IANA Considerations
