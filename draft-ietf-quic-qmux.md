@@ -536,7 +536,7 @@ define its mapping for QMux, or explicitly allow the use; see {{permitted-tps}}.
 As is the case with QUIC version 1, use of extension frames have to be
 negotiated before use; see {{Section 19.21 of QUIC}}.
 
-This specification defines the mapping of the Unreliable Datagram Extension.
+This specification defines the mapping of the following extensions.
 
 
 ## Unreliable Datagram Extension
@@ -548,6 +548,19 @@ parameters.
 
 As discussed in {{Section 5 of QUIC_DATAGRAM}}, senders can drop DATAGRAM frames
 if the transport is blocked by flow or congestion control.
+
+
+## Stream Resets with Partial Delivery Extension
+
+The use of the Stream Resets with Partial Delivery Extension
+{{!RESET-STREAM-AT=I-D.ietf-quic-reliable-stream-reset}} is permitted. The
+encoding and semantics of the RESET_STREAM_AT frame remain unchanged, and the
+use of the extension is negotiated via transport parameters.
+
+Because QMux runs on a reliable transport, all stream data is delivered to the
+receiving stack before the RESET_STREAM_AT frame. The Reliable Size indicates
+how much of that data the stack needs to deliver to the application before
+signaling the reset.
 
 
 # Version Agility
